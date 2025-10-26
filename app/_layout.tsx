@@ -1,29 +1,22 @@
+// app/_layout.tsx
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React from "react";
+import { AuthProvider } from "./contexts/AuthContext";
 
+/**
+ * layout raiz simples.
+ * o Stack é o único elemento que o Expo Router precisa renderizar aqui.
+ * o AuthProvider envolve tudo pra manter contexto global.
+ */
 export default function RootLayout() {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      {/* 
-        O <Stack> cria automaticamente o sistema de navegação
-        com base nos arquivos dentro da pasta /app
-      */}
+    <AuthProvider>
       <Stack
         screenOptions={{
           headerShown: false,
           animation: "slide_from_right",
         }}
       />
-    </SafeAreaView>
+    </AuthProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-});
