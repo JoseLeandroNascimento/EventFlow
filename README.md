@@ -1,50 +1,83 @@
-# Welcome to your Expo app 👋
+# 🎟️ EventFlow
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+O **EventFlow** é um aplicativo mobile moderno para **gestão e exploração de eventos**, desenvolvido com **React Native (Expo)** e **Expo Router**.  
+Ele oferece uma interface limpa e intuitiva, controle de acesso por tipo de usuário (Admin / Usuário comum) e funcionalidades completas como upload de imagens, mapa interativo e CRUD de eventos e locais.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Funcionalidades Principais
 
-   ```bash
-   npm install
-   ```
+### 👥 Autenticação com Perfis
+- **Login dinâmico com dois tipos de usuário:**
+  - 🧑‍💼 **Administrador:** pode criar, editar e excluir eventos e locais.
+  - 🙋‍♂️ **Usuário Comum:** pode explorar e visualizar detalhes dos eventos.
+- Controle de sessão e redirecionamento automáticos com **AuthContext**.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+### 🎫 Eventos
+- Listagem de eventos com busca e contagem total.
+- Tela de detalhes completa (data, horário, valor, localização e mapa).
+- Criação de novos eventos com:
+  - Upload de múltiplas imagens da galeria.
+  - Seletor de data e horário (mockado).
+  - Seleção de local cadastrado ou marcação no mapa.
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 🏢 Locais
+- Listagem de locais com visualização rápida e ações de editar / excluir.
+- Cadastro de novos locais com:
+  - Campos de endereço, bairro, CEP e coordenadas.
+  - Mapa interativo para selecionar o local exato.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+### 🧭 Navegação e Estrutura
+- **Expo Router** para navegação declarativa e sem dependências extras.
+- Controle automático de acesso baseado no papel do usuário.
+- Layouts limpos e idênticos ao design do Figma.
 
-When you're ready, run:
+---
 
+### 🧭 Menu Global (Header Comum)
+- Componente `AppHeader` presente em **todas as telas**.
+- Contém:
+  - Logo do app
+  - Botão de menu lateral com as opções de navegação
+  - Logout embutido diretamente no menu
+- Itens dinâmicos conforme o perfil logado (Admin / Usuário).
+
+---
+
+## 🔐 Acesso ao Aplicativo (Mockado)
+
+> O EventFlow vem com autenticação simulada para testes locais.  
+> Basta usar as credenciais abaixo para navegar no app:
+
+| Tipo de Usuário | E-mail              | Senha    | Permissões |
+|-----------------|---------------------|----------|-------------|
+| 👑 **Admin** | `admin@email.com` | `123456` | Acesso total (eventos + locais) |
+| 🙋‍♂️ **Usuário comum** | `user@email.com`  | `123456` | Somente leitura de eventos |
+
+---
+
+## 🧩 Tecnologias Utilizadas
+
+| Categoria | Tecnologias |
+|------------|--------------|
+| Framework | [Expo](https://expo.dev) + [React Native](https://reactnative.dev) |
+| Navegação | [Expo Router](https://expo.github.io/router/docs) |
+| Mapa | [react-native-maps](https://github.com/react-native-maps/react-native-maps) |
+| Upload de Imagens | [expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) |
+| Ícones | [@expo/vector-icons](https://icons.expo.fyi) |
+| Estilização | `StyleSheet` (React Native puro) |
+
+---
+
+## 🛠️ Como Executar o Projeto Localmente
+
+### 1️⃣ Clonar o repositório
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+git clone https://github.com/seu-usuario/eventflow.git
+cd eventflow
