@@ -1,20 +1,52 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "./contexts/AuthContext";
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // 🔁 Redireciona automaticamente se já estiver logado
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log("Usuário autenticado:", user.email, "Role:", user.role);
+      router.replace("/events");
+    }
+  }, [isAuthenticated, user]);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Atenção", "Informe e-mail e senha.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await login(email, password);
+      // O redirecionamento será feito automaticamente pelo useEffect acima
+    } catch (err: any) {
+      console.log("Erro no login:", err);
+      Alert.alert("Erro", "E-mail ou senha incorretos ou servidor inacessível.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -36,6 +68,7 @@ export default function LoginScreen() {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
           </View>
 
@@ -51,8 +84,16 @@ export default function LoginScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.loginBtn} onPress={() => login(email, password)}>
-            <Text style={styles.loginText}>Entrar</Text>
+          <TouchableOpacity
+            style={[styles.loginBtn, loading && { opacity: 0.7 }]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginText}>Entrar</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

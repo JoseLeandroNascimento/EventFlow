@@ -1,20 +1,23 @@
 import AppHeader from "@/components/AppHeader";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../contexts/AuthContext";
+import { createEvento } from "../services/eventService";
 
 export default function CreateEventScreen() {
   const router = useRouter();
@@ -25,13 +28,23 @@ export default function CreateEventScreen() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [date, setDate] = useState<Date | null>(null);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [endTime, setEndTime] = useState<Date | null>(null);
   const [place, setPlace] = useState("");
   const [lat, setLat] = useState(-23.55052);
   const [lng, setLng] = useState(-46.633308);
   const [images, setImages] = useState<string[]>([]);
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  // === Formatações ===
+  const formatDate = (d?: Date | null) =>
+    d ? d.toISOString().split("T")[0] : "";
+  const formatTime = (d?: Date | null) =>
+    d ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
 
   // === Escolher Imagem ===
   const pickImage = async (fromCamera: boolean) => {
@@ -74,6 +87,43 @@ export default function CreateEventScreen() {
     }
   };
 
+
+  const handleSave = async () => {
+    const dateStr = date?.toISOString().split("T")[0] ?? "";
+
+    const buildISOTime = (time: Date | null) => {
+      if (!time) return undefined;
+      const h = time.getHours().toString().padStart(2, "0");
+      const m = time.getMinutes().toString().padStart(2, "0");
+      return new Date(`${dateStr}T${h}:${m}:00Z`).toISOString();
+    };
+
+    const payload = {
+      name,
+      desc,
+      category,
+      date: dateStr,
+      startTime: buildISOTime(startTime),
+      endTime: buildISOTime(endTime),
+      place,
+      lat,
+      lng,
+      images,
+    };
+
+    console.log("🛰️ Enviando dados para API:", JSON.stringify(payload, null, 2));
+
+    try {
+      const newEvent = await createEvento(payload);
+      Alert.alert("Sucesso", "Evento criado com sucesso!");
+      router.back();
+    } catch (error) {
+      console.error("❌ Erro ao enviar:", error);
+    }
+  };
+
+
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       <AppHeader />
@@ -103,7 +153,7 @@ export default function CreateEventScreen() {
         </View>
 
         <Text style={styles.label}>Nome</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="example" />
+        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Título do evento" />
 
         <Text style={styles.label}>Descrição</Text>
         <TextInput
@@ -111,7 +161,7 @@ export default function CreateEventScreen() {
           value={desc}
           onChangeText={setDesc}
           multiline
-          placeholder="Autosize height based on content lines"
+          placeholder="Detalhes do evento..."
         />
 
         <Text style={styles.label}>Categoria</Text>
@@ -119,55 +169,73 @@ export default function CreateEventScreen() {
           style={styles.input}
           value={category}
           onChangeText={setCategory}
-          placeholder="Please select"
+          placeholder="Ex: Palestra, Show..."
         />
 
+        {/* === Date === */}
         <Text style={styles.label}>Data do Evento</Text>
-        <TextInput
-          style={styles.input}
-          value={date}
-          onChangeText={setDate}
-          placeholder="Select date"
-        />
+        <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+          <Text>{date ? formatDate(date) : "Selecionar data"}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={date || new Date()}
+            mode="date"
+            display={Platform.OS === "ios" ? "inline" : "default"}
+            onChange={(e, selectedDate) => {
+              setShowDatePicker(false);
+              if (selectedDate) setDate(selectedDate);
+            }}
+          />
+        )}
 
+        {/* === Horários === */}
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>Horário Inicial</Text>
-            <TextInput
-              style={styles.input}
-              value={startTime}
-              onChangeText={setStartTime}
-              placeholder="Select time"
-            />
+            <TouchableOpacity style={styles.input} onPress={() => setShowStartPicker(true)}>
+              <Text>{startTime ? formatTime(startTime) : "Selecionar hora"}</Text>
+            </TouchableOpacity>
+            {showStartPicker && (
+              <DateTimePicker
+                value={startTime || new Date()}
+                mode="time"
+                is24Hour
+                display="default"
+                onChange={(e, selectedTime) => {
+                  setShowStartPicker(false);
+                  if (selectedTime) setStartTime(selectedTime);
+                }}
+              />
+            )}
           </View>
+
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>Horário Final</Text>
-            <TextInput
-              style={styles.input}
-              value={endTime}
-              onChangeText={setEndTime}
-              placeholder="Select time"
-            />
+            <TouchableOpacity style={styles.input} onPress={() => setShowEndPicker(true)}>
+              <Text>{endTime ? formatTime(endTime) : "Selecionar hora"}</Text>
+            </TouchableOpacity>
+            {showEndPicker && (
+              <DateTimePicker
+                value={endTime || new Date()}
+                mode="time"
+                is24Hour
+                display="default"
+                onChange={(e, selectedTime) => {
+                  setShowEndPicker(false);
+                  if (selectedTime) setEndTime(selectedTime);
+                }}
+              />
+            )}
           </View>
         </View>
 
-        <Text style={styles.label}>Selecione os Locais Cadastrados</Text>
-        <TextInput
-          style={styles.input}
-          value={place}
-          onChangeText={setPlace}
-          placeholder="Please select"
-        />
-
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>Ou</Text>
-          <View style={styles.divider} />
-        </View>
-
-        <Text style={styles.label}>Marque no Mapa o Local Desejado</Text>
+        {/* Local */}
+        <Text style={styles.label}>Local</Text>
+        <TextInput style={styles.input} value={place} onChangeText={setPlace} placeholder="Nome do local" />
 
         {/* Mapa */}
+        <Text style={[styles.label, { marginTop: 12 }]}>Marque o Local no Mapa</Text>
         <View style={styles.mapContainer}>
           <MapView
             style={styles.map}
@@ -184,36 +252,13 @@ export default function CreateEventScreen() {
           >
             <Marker coordinate={{ latitude: lat, longitude: lng }} />
           </MapView>
-          <TouchableOpacity style={styles.mapButton}>
-            <Text style={styles.mapButtonText}>Marque no Mapa</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Latitude</Text>
-            <TextInput
-              style={styles.input}
-              value={String(lat)}
-              onChangeText={(t) => setLat(Number(t) || lat)}
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Longitude</Text>
-            <TextInput
-              style={styles.input}
-              value={String(lng)}
-              onChangeText={(t) => setLng(Number(t) || lng)}
-              keyboardType="numeric"
-            />
-          </View>
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.saveBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
             <Text style={styles.saveText}>Salvar</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
             <Text style={styles.cancelText}>Cancelar</Text>
           </TouchableOpacity>
@@ -259,32 +304,13 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0",
     borderRadius: 8,
     paddingHorizontal: 12,
+    justifyContent: "center",
     backgroundColor: "#fff",
-    fontSize: 13,
   },
   textArea: { height: 90, textAlignVertical: "top" },
   row: { flexDirection: "row", gap: 10 },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 12,
-    gap: 8,
-  },
-  divider: { flex: 1, height: 1, backgroundColor: "#E0E0E0" },
-  dividerText: { color: "#8E8E93", fontSize: 12 },
   mapContainer: { marginTop: 4, borderRadius: 12, overflow: "hidden" },
   map: { width: "100%", height: 150 },
-  mapButton: {
-    position: "absolute",
-    top: "40%",
-    left: "25%",
-    right: "25%",
-    backgroundColor: "#F5F5F5",
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignItems: "center",
-  },
-  mapButtonText: { fontWeight: "600", color: "#333" },
   actions: { flexDirection: "row", gap: 10, marginTop: 20 },
   saveBtn: {
     flex: 1,

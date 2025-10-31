@@ -3,12 +3,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Modal,
+  Platform,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function AppHeader() {
@@ -22,7 +24,12 @@ export default function AppHeader() {
   };
 
   return (
-    <View>
+    <View
+      style={{
+        marginTop: Platform.OS === "android" ? StatusBar.currentHeight : 0, // 👈 corrige a sobreposição
+        backgroundColor: "#fff",
+      }}
+    >
       {/* Header Principal */}
       <View style={styles.header}>
         <Text style={styles.logo}>Logo</Text>
@@ -64,7 +71,10 @@ export default function AppHeader() {
                   <Text style={styles.menuText}>Locais</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={() => navigate("/locations/create")}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => navigate("/locations/create")}
+                >
                   <Ionicons name="add-outline" size={18} color="#0B1E74" />
                   <Text style={styles.menuText}>Criar Local</Text>
                 </TouchableOpacity>
