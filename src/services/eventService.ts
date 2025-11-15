@@ -65,3 +65,8 @@ export async function getEventoById(id: string): Promise<Evento> {
   };
 }
 
+export async function deleteEvento(id: string) {
+  return await pb.collection("eventos").delete(id);
+}
+
+

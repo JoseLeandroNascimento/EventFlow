@@ -25,12 +25,15 @@ type LocalPB = {
     longitude: number;
 };
 
-export function CreateEventScreen({ navigation }) {
+export function CreateEventScreen({ navigation, route }) {
+
+    const eventId = route?.params?.id ?? null;
+    const isEditing = !!eventId;
 
     const [locais, setLocais] = useState<LocalPB[]>([]);
 
     const [categoria, setCategoria] = useState("");
-    const [localSelecionado, setLocalSelecionado] = useState(""); // ID do local
+    const [localSelecionado, setLocalSelecionado] = useState("");
 
     const [images, setImages] = useState<string[]>([]);
 
@@ -48,9 +51,7 @@ export function CreateEventScreen({ navigation }) {
     const [showTimeStart, setShowTimeStart] = useState(false);
     const [showTimeEnd, setShowTimeEnd] = useState(false);
 
-    // -------------------------------------------------
-    // 🚀 Buscar locais no PocketBase
-    // -------------------------------------------------
+
     async function loadLocais() {
         try {
             const list = await getAllLocais();
@@ -61,14 +62,55 @@ export function CreateEventScreen({ navigation }) {
         }
     }
 
+    async function loadEvento() {
+        if (!isEditing) return;
+
+        try {
+            const ev = await pb.collection("eventos").getOne(eventId, {
+                expand: "local"
+            });
+
+            setNome(ev.nome);
+            setDescricao(ev.descricao);
+            setCategoria(ev.categoria);
+
+            setDataEvento(new Date(ev.dataEvento).toLocaleDateString("pt-BR"));
+            setHoraInicio(ev.horaInicio);
+            setHoraFim(ev.horaFim);
+
+            setLatitude(String(ev.latitude));
+            setLongitude(String(ev.longitude));
+
+            if (ev.local) {
+                setLocalSelecionado(ev.local);
+
+                const loc = ev.expand?.local;
+                if (loc) {
+                    setLatitude(String(loc.latitude));
+                    setLongitude(String(loc.longitude));
+                }
+            }
+
+            if (ev.imagens && ev.imagens.length > 0) {
+                setImages(ev.imagens.map((img) => pb.files.getUrl(ev, img)));
+            }
+
+
+        } catch (error) {
+            console.log(error);
+            Alert.alert("Erro", "Não foi possível carregar os dados do evento.");
+        }
+    }
+
     useEffect(() => {
-        loadLocais();
+        async function init() {
+            await loadLocais();
+            await loadEvento();
+        }
+        init();
     }, []);
 
-    // -------------------------------------------------
-    // Quando usuário seleciona um local cadastrado
-    // preencher latitude/longitude automaticamente
-    // -------------------------------------------------
+
     useEffect(() => {
         if (!localSelecionado) return;
 
@@ -79,9 +121,7 @@ export function CreateEventScreen({ navigation }) {
         }
     }, [localSelecionado]);
 
-    // -------------------------------------------------
-    // 🚀 Criar evento no PocketBase
-    // -------------------------------------------------
+
     async function handleSalvar() {
         if (!nome || !descricao || !categoria || !dataEvento || !horaInicio || !horaFim) {
             Alert.alert("Erro", "Preencha todos os campos obrigatórios.");
@@ -119,7 +159,14 @@ export function CreateEventScreen({ navigation }) {
 
             formData.append("owner", pb.authStore.record?.id || "");
 
-            await pb.collection("eventos").create(formData);
+            if (isEditing) {
+                await pb.collection("eventos").update(eventId, formData);
+                Alert.alert("Sucesso", "Evento atualizado!");
+            } else {
+                formData.append("owner", pb.authStore.record?.id || "");
+                await pb.collection("eventos").create(formData);
+                Alert.alert("Sucesso", "Evento criado!");
+            }
 
             Alert.alert("Sucesso", "Evento cadastrado com sucesso!");
             navigation.goBack();
@@ -135,7 +182,6 @@ export function CreateEventScreen({ navigation }) {
 
             <Text style={styles.title}>Cadastrar Evento</Text>
 
-            {/* Upload de imagens */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
                 <ImageUpload images={images} onChange={setImages} />
             </ScrollView>
@@ -143,7 +189,6 @@ export function CreateEventScreen({ navigation }) {
             <FormInput label="Nome" value={nome} onChangeText={setNome} />
             <FormTextarea label="Descrição" value={descricao} onChangeText={setDescricao} />
 
-            {/* Seleção de categoria */}
             <FormSelect
                 label="Categoria"
                 value={categoria}
@@ -155,7 +200,6 @@ export function CreateEventScreen({ navigation }) {
                 onChange={setCategoria}
             />
 
-            {/* Data */}
             <FormDatePicker
                 label="Data do Evento"
                 value={dataEvento}
@@ -173,7 +217,6 @@ export function CreateEventScreen({ navigation }) {
                 />
             )}
 
-            {/* Horários */}
             <View style={styles.row}>
                 <FormTimePicker
                     label="Horário Inicial"
@@ -212,7 +255,6 @@ export function CreateEventScreen({ navigation }) {
                 )}
             </View>
 
-            {/* Locais do PB */}
             <FormSelect
                 label="Locais"
                 value={localSelecionado}

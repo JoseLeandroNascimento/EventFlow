@@ -6,6 +6,9 @@ import { FlatList, Text, View, RefreshControl } from "react-native";
 
 import { styles } from "./style";
 import { getEventos, Evento } from "@/services/eventService";
+import { deleteEvento } from "@/services/eventService";
+import { Alert } from "react-native";
+
 
 export function EventListScreen({ navigation }: any) {
     const [search, setSearch] = useState("");
@@ -13,9 +16,7 @@ export function EventListScreen({ navigation }: any) {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    // ----------------------------------
-    // 🔥 Carregar eventos da API
-    // ----------------------------------
+
     async function loadEventos(showLoading = true) {
         try {
             if (showLoading) setLoading(true);
@@ -29,19 +30,39 @@ export function EventListScreen({ navigation }: any) {
         }
     }
 
-    // 🔄 Atualizar ao puxar a tela
     function onRefresh() {
         setRefreshing(true);
         loadEventos(false);
     }
 
-    // 🔍 Atualizar enquanto o usuário digita (debounce)
+    async function handleDelete(id: string) {
+        Alert.alert(
+            "Excluir evento",
+            "Tem certeza que deseja excluir este evento?",
+            [
+                { text: "Cancelar", style: "cancel" },
+                {
+                    text: "Excluir",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteEvento(id);
+                            loadEventos(false);
+                        } catch (err) {
+                            console.log("Erro ao excluir evento", err);
+                        }
+                    },
+                },
+            ]
+        );
+    }
+
+
     useEffect(() => {
         const timer = setTimeout(() => loadEventos(), 300);
         return () => clearTimeout(timer);
     }, [search]);
 
-    // 📌 Primeira carga
     useEffect(() => {
         loadEventos();
     }, []);
@@ -76,7 +97,7 @@ export function EventListScreen({ navigation }: any) {
                     </>
                 }
                 renderItem={({ item }) => (
-                    <AdminEventCard event={item} />
+                    <AdminEventCard event={item} onDelete={handleDelete}/>
                 )}
                 contentContainerStyle={{ paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}

@@ -9,9 +9,11 @@ const { width } = Dimensions.get("window");
 
 type Props = {
   event: Evento;
+  onDelete: (id: string) => void;
 };
 
-export function AdminEventCard({ event }: Props) {
+
+export function AdminEventCard({ event, onDelete }: Props) {
   const navigation = useNavigation();
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -28,7 +30,10 @@ export function AdminEventCard({ event }: Props) {
 
   return (
     <View style={styles.card}>
-      <TouchableOpacity style={styles.deleteTag}>
+      <TouchableOpacity
+        style={styles.deleteTag}
+        onPress={() => onDelete(event.id)}
+      >
         <Text style={styles.deleteText}>Excluir Evento</Text>
         <Ionicons name="close" size={14} color="#fff" style={{ marginLeft: 4 }} />
       </TouchableOpacity>
@@ -64,7 +69,9 @@ export function AdminEventCard({ event }: Props) {
 
         {/* AÇÕES */}
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.editButton}>
+          <TouchableOpacity style={styles.editButton}  onPress={() =>
+              navigation.navigate("create-event", { id: event.id } as never)
+            }>
             <Ionicons name="create-outline" size={16} color="#fff" />
             <Text style={styles.actionText}>Editar</Text>
           </TouchableOpacity>
